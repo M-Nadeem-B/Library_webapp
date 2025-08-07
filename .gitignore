@@ -1,0 +1,15 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+venv/
+.env/
+.DS_Store
+*.xlsx
+.venv/
+setup_postgresql.sh
+setup.sql

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Secure PDF Library{% endblock %}
+
+{% block content %}
+<div class="login-form" style="text-align: center; max-width: 400px; margin: auto; padding: 30px;">
+
+    <form method="POST" action="{{ url_for('login') }}">
+        <div class="input-group" style="margin-bottom: 15px;">
+            <label for="username">Username</label><br>
+            <input type="text" id="username" name="username" placeholder="Enter your username" required style="width: 100%; padding: 8px;">
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 20px;">
+            <label for="enrollment">Enrollment No.</label><br>
+            <input type="text" id="enrollment_no" name="enrollment_no" placeholder="Enter your enrollment no." required style="width: 100%; padding: 8px;">
+        </div>
+        
+        <button type="submit" class="btn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+            Access Library
+        </button>
+    </form>
+    
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+        <h4 style="margin-bottom: 15px; color: #666;">Demo Credentials:</h4>
+        <div style="font-family: monospace; color: #333; line-height: 1.6;">
+            <strong>Nadeem</strong> / JSMU/DPHM/056/IPS/2021<br>
+            <strong>admin</strong> / JSMU/DPHM/XXX/IPS/XXXX
+        </div>
+    </div>
+</div>
+{% endblock %}

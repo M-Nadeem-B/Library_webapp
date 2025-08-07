@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Task Master</title>
+{% endblock %}
+
+{% block body %}
+    <div style="text-align: center;" class="content">
+        <h1 style="text-align: center;">Task Master</h1>
+
+        <form action="{{ url_for('add') }}" method="POST">
+            <input type="text" name="task" placeholder="Enter a new task" required>
+            <input type="submit" value="Add Task">
+        </form>
+
+
+        <table  border="1" cellpadding="10" style="margin: 0 auto;">
+            <tr>
+                <th>Task</th>
+                <th>Added</th>
+                <th>Action</th>
+            </tr>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.task }}</td>
+                <td>{{ task.date_created.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('delete', id=task.id) }}">Delete</a><br>
+                    <a href="{{ url_for('update', id=task.id) }}">Update</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+          
+
+    </div>
+    
+    {% block content %}{% endblock %}
+    
+    <footer style="text-align: center;">
+        <p>&copy; 2025 Muhammad Nadeem</p>
+    </footer>
+{% endblock %}

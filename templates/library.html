@@ -1,0 +1,44 @@
+<!-- templates/library.html -->
+{% extends "base.html" %}
+
+{% block title %}Library - Secure PDF Library{% endblock %}
+
+{% block content %}
+<div class="welcome-msg">
+    <h2 class="welcome-heading">Welcome, {{ username }}!</h2>
+    <p class="welcome-subheading">Here are your authorized documents</p>
+</div>
+<div style="text-align: right; margin-bottom: 20px;">
+    <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Logout</a>
+</div>
+
+<div style="text-align: right; margin-top: 10px;">
+
+</div>
+<h2 class="welcome-heading">Welcome, {{ name }}!</h2>
+
+
+<div class="pdf-grid">
+    {% for pdf in pdfs %}
+    <div class="pdf-card">
+        <h3>📄 {{ pdf.title }}</h3>
+        <p>{{ pdf.description }}</p>
+        <div class="pdf-actions">
+            <a href="{{ url_for('serve_pdf', filename=pdf.filename) }}" class="pdf-link" target="_self" >
+                📖 View PDF
+            </a>
+            <a href="{{ url_for('download_pdf', filename=pdf.filename) }}" class="pdf-download">
+                💾 Download
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not pdfs %}
+<div style="text-align: center; padding: 50px; color: #666;">
+    <h3>No documents available</h3>
+    <p>You don't have access to any PDFs at the moment.</p>
+</div>
+{% endif %}
+{% endblock %}

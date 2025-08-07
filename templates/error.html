@@ -1,0 +1,20 @@
+<!-- templates/error.html -->
+{% extends "base.html" %}
+
+{% block title %}Error {{ error_code }} - Secure PDF Library{% endblock %}
+
+{% block header_subtitle %}Something went wrong{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code">{{ error_code }}</div>
+    <div class="error-message">{{ error_message }}</div>
+    <a href="{{ url_for('library') if session.user else url_for('login') }}" class="btn" style="max-width: 200px; margin: 0 auto;">
+        {% if session.user %}
+            Back to Library
+        {% else %}
+            Back to Login
+        {% endif %}
+    </a>
+</div>
+{% endblock %}

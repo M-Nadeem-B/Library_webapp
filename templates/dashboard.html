@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - PDF Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">Admin Dashboard</h1>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
+
+  <!-- Total Users Card -->
+  <div style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 10px; text-align: center; padding: 20px;">
+    <div style="font-size: 2rem; font-weight: bold;">2</div>
+    <div style="margin: 10px 0;"><i class="fas fa-users" style="font-size: 24px;"></i></div>
+    <div>Total Users</div>
+  </div>
+
+  <!-- Total PDFs Card -->
+  <div style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 10px; text-align: center; padding: 20px;">
+    <div style="font-size: 2rem; font-weight: bold;">1</div>
+    <div style="margin: 10px 0;"><i class="fas fa-file-pdf" style="font-size: 24px;"></i></div>
+    <div>Total PDFs</div>
+  </div>
+
+  <!-- Recent Logins Card -->
+  <div style="width: 150px; height: 150px; background: #f0f0f0; border-radius: 10px; text-align: center; padding: 20px;">
+    <div style="font-size: 2rem; font-weight: bold;">6</div>
+    <div style="margin: 10px 0;"><i class="fas fa-sign-in-alt" style="font-size: 24px;"></i></div>
+    <div>Recent Logins</div>
+  </div>
+
+</div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Quick Actions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('library') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-book"></i> View Library
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-success w-100" onclick="alert('Feature coming soon!')">
+                                <i class="fas fa-plus"></i> Add PDF
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-info w-100" onclick="alert('Feature coming soon!')">
+                                <i class="fas fa-user-plus"></i> Add User
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-warning w-100" onclick="alert('Feature coming soon!')">
+                                <i class="fas fa-chart-bar"></i> View Reports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>System Status</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle"></i> System is running normally
+                    </div>
+                    <p><strong>Database:</strong> Connected</p>
+                    <p><strong>PDF Storage:</strong> Available</p>
+                    <p><strong>Session Management:</strong> Active</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
