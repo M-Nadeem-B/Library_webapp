@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Library - Dashboard{% endblock %}
+
+{% block content %}
+<div class="welcome-msg">
+  <h2>Welcome, {{ session.username or 'User' }}</h2>
+  <p>Select a subject to browse your books</p>
+</div>
+
+<div style="text-align: right; margin-bottom: 20px;">
+  <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+</div>
+
+<div style="display:flex; gap:15px; align-items:center; margin-bottom:20px;">
+  <label for="subjectSelect" style="font-weight:600; color:#fff;">Subject</label>
+  <select id="subjectSelect" style="padding:10px; border-radius:8px;">
+    <option value="">All Subjects</option>
+    {% for s in subjects %}
+      <option value="{{ s.id }}">{{ s.name }}</option>
+    {% endfor %}
+  </select>
+
+  <button id="loadBtn" class="btn" style="width:auto; padding:10px 20px;">Load Books</button>
+</div>
+
+<div id="booksContainer" class="pdf-grid">
+  {% for p in pdfs %}
+  <div class="pdf-card" data-pdf-id="{{ p.id }}">
+    <h3>{{ p.title }}</h3>
+    <p>Author: {{ p.author or 'Unknown' }} {% if p.edition %} | Edition: {{ p.edition }}{% endif %}</p>
+    <p>Last read: {{ progress_map.get(p.id) or 'Not started' }}</p>
+
+    <div class="pdf-actions">
+      <a class="pdf-download" href="{{ url_for('download_pdf', pdf_id=p.id) }}">
+      Download
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- A lightweight reader modal (opens new tab or use PDF.js integration later) -->
+<script>
+
+
+
+document.getElementById('loadBtn').addEventListener('click', async () => {
+  const subjectId = document.getElementById('subjectSelect').value;
+  const url = '/api/books' + (subjectId ? '?subject_id=' + subjectId : '');
+  const resp = await fetch(url, { credentials: 'same-origin' });
+  const books = await resp.json();
+  renderBooks(books);
+});
+
+
+function renderBooks(books) {
+  const container = document.getElementById('booksContainer');
+  container.innerHTML = '';
+  books.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'pdf-card';
+    card.dataset.pdfId = p.id;
+    card.innerHTML = `
+      <h3>${escapeHtml(p.title)}</h3>
+      <p>Author: ${escapeHtml(p.author || 'Unknown')} ${p.edition ? '| Edition: ' + escapeHtml(p.edition) : ''}</p>
+      <p>Last read: Not loaded</p>
+      <div class="pdf-actions">
+        <a class="pdf-download" href="/download/${p.id}">
+        Download
+        </a>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function escapeHtml(text) {
+  return text ? text.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) : '';
+}
+
+
+
+  // optimistic set last page = 1 (UI)
+  // you should call last-read update when user leaves reader or when PDF viewer sends page events
+  fetch('/api/last-read', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ pdf_id: pdfId, last_page: 1 })
+  }).catch(err => console.warn('Could not save last-read', err));
+
+
+// simple function to load user's highlights for a selected PDF (optional)
+async function loadHighlights(pdfId) {
+  const res = await fetch('/api/highlights?pdf_id=' + pdfId, { credentials: 'same-origin' });
+  const h = await res.json();
+  return h;
+}
+</script>
+
+{% endblock %}
