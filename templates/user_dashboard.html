@@ -1,101 +1,408 @@
 {% extends "base.html" %}
-{% block title %}Library - Dashboard{% endblock %}
+{% block title %}Library Dashboard{% endblock %}
 
 {% block content %}
-<div class="welcome-msg">
-  <h2>Welcome, {{ session.username or 'User' }}</h2>
-  <p>Select a subject to browse your books</p>
-</div>
+<style>
+  .dashboard-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-<div style="text-align: right; margin-bottom: 20px;">
-  <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
-</div>
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
 
-<div style="display:flex; gap:15px; align-items:center; margin-bottom:20px;">
-  <label for="subjectSelect" style="font-weight:600; color:#fff;">Subject</label>
-  <select id="subjectSelect" style="padding:10px; border-radius:8px;">
-    <option value="">All Subjects</option>
-    {% for s in subjects %}
-      <option value="{{ s.id }}">{{ s.name }}</option>
-    {% endfor %}
-  </select>
+  .welcome-box h2 {
+    margin: 0 0 6px 0;
+    color: #fff;
+  }
 
-  <button id="loadBtn" class="btn" style="width:auto; padding:10px 20px;">Load Books</button>
-</div>
+  .welcome-box p {
+    margin: 0;
+    color: #d8d8d8;
+  }
 
-<div id="booksContainer" class="pdf-grid">
-  {% for p in pdfs %}
-  <div class="pdf-card" data-pdf-id="{{ p.id }}">
-    <h3>{{ p.title }}</h3>
-    <p>Author: {{ p.author or 'Unknown' }} {% if p.edition %} | Edition: {{ p.edition }}{% endif %}</p>
-    <p>Last read: {{ progress_map.get(p.id) or 'Not started' }}</p>
+  .logout-btn {
+    display: inline-block;
+    background: #dc3545;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+  }
 
-    <div class="pdf-actions">
-      <a class="pdf-download" href="{{ url_for('download_pdf', pdf_id=p.id) }}">
-      Download
-      </a>
+  .logout-btn:hover {
+    opacity: 0.9;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 15px;
+  }
+
+  .clear-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .clear-btn:hover {
+    opacity: 0.9;
+  }
+
+  .section-title {
+    margin: 0 0 14px 0;
+    color: #fff;
+    font-size: 1.25rem;
+  }
+
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .subject-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+    border: 2px solid transparent;
+  }
+
+  .subject-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.16);
+  }
+
+  .subject-card.active {
+    border: 2px solid #0d6efd;
+  }
+
+  .subject-card h3 {
+    margin: 0 0 8px 0;
+    color: #222;
+    font-size: 1.05rem;
+  }
+
+  .subject-card p {
+    margin: 0;
+    color: #666;
+    font-size: 0.92rem;
+  }
+
+  .books-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .active-subject {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .result-count {
+    color: #ddd;
+    font-size: 0.95rem;
+  }
+
+  .pdf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  .pdf-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pdf-card h3 {
+    margin: 0;
+    color: #222;
+    font-size: 1.02rem;
+    line-height: 1.4;
+  }
+
+  .pdf-meta {
+    color: #555;
+    font-size: 0.93rem;
+    line-height: 1.5;
+  }
+
+  .pdf-desc {
+    color: #666;
+    font-size: 0.92rem;
+    min-height: 38px;
+  }
+
+  .pdf-actions {
+    margin-top: auto;
+  }
+
+  .pdf-download {
+    display: inline-block;
+    background: #198754;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .pdf-download:hover {
+    opacity: 0.92;
+  }
+
+  .empty-state {
+    background: rgba(255,255,255,0.08);
+    border: 1px dashed rgba(255,255,255,0.2);
+    padding: 28px;
+    border-radius: 14px;
+    color: #eee;
+    text-align: center;
+    grid-column: 1 / -1;
+  }
+
+  .helper-text {
+    color: #ccc;
+    font-size: 0.9rem;
+    margin-top: -6px;
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="dashboard-wrap">
+  <div class="top-bar">
+    <div class="welcome-box">
+      <h2>Welcome, {{ session.username or 'User' }}</h2>
+      <p>Browse books by subject, title, or author.</p>
     </div>
+
+    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
   </div>
-  {% endfor %}
+
+  <div class="toolbar">
+    <input
+      type="text"
+      id="searchInput"
+      class="search-input"
+      placeholder="Search by book title or author..."
+    >
+    <button id="showAllBtn" class="clear-btn" type="button">Show All Subjects</button>
+  </div>
+
+  <h3 class="section-title">Subjects</h3>
+  <p class="helper-text">Click a subject to filter books. Use search to find by title or author.</p>
+
+  <div id="subjectGrid" class="subject-grid">
+    {% for s in subjects %}
+      <div class="subject-card" data-subject-id="{{ s.id }}" data-subject-name="{{ s.name }}">
+        <h3>{{ s.name }}</h3>
+        <p>{{ s.book_count }} book{{ '' if s.book_count == 1 else 's' }}</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="books-header">
+    <div id="activeSubjectLabel" class="active-subject">All Books</div>
+    <div id="resultCount" class="result-count">{{ pdfs|length }} books</div>
+  </div>
+
+  <div id="booksContainer" class="pdf-grid">
+    {% for p in pdfs %}
+      <div class="pdf-card">
+        <h3>{{ p.title }}</h3>
+
+        <div class="pdf-meta">
+          <div><strong>Author:</strong> {{ p.author or 'Unknown' }}</div>
+          {% if p.edition %}
+            <div><strong>Edition:</strong> {{ p.edition }}</div>
+          {% endif %}
+          {% if p.year %}
+            <div><strong>Year:</strong> {{ p.year }}</div>
+          {% endif %}
+          <div><strong>Last read:</strong> {{ progress_map.get(p.id) or 'Not started' }}</div>
+        </div>
+
+        <div class="pdf-desc">
+          {{ p.description or 'No description available.' }}
+        </div>
+
+        <div class="pdf-actions">
+          <a class="pdf-download" href="{{ url_for('download_pdf', pdf_id=p.id) }}">
+            Download
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 </div>
 
-<!-- A lightweight reader modal (opens new tab or use PDF.js integration later) -->
 <script>
+  const subjectCards = document.querySelectorAll('.subject-card');
+  const booksContainer = document.getElementById('booksContainer');
+  const activeSubjectLabel = document.getElementById('activeSubjectLabel');
+  const resultCount = document.getElementById('resultCount');
+  const searchInput = document.getElementById('searchInput');
+  const showAllBtn = document.getElementById('showAllBtn');
 
+  let allBooks = {{ pdfs|tojson }};
+  let currentBooks = [...allBooks];
+  let currentSubjectName = 'All Books';
+  let currentSubjectId = null;
 
+  async function fetchBooks(subjectId = null, subjectName = 'All Books') {
+    let url = '/api/books';
+    if (subjectId) {
+      url += '?subject_id=' + encodeURIComponent(subjectId);
+    }
 
-document.getElementById('loadBtn').addEventListener('click', async () => {
-  const subjectId = document.getElementById('subjectSelect').value;
-  const url = '/api/books' + (subjectId ? '?subject_id=' + subjectId : '');
-  const resp = await fetch(url, { credentials: 'same-origin' });
-  const books = await resp.json();
-  renderBooks(books);
-});
+    const resp = await fetch(url, { credentials: 'same-origin' });
+    const books = await resp.json();
 
+    currentBooks = books;
+    currentSubjectId = subjectId;
+    currentSubjectName = subjectName;
 
-function renderBooks(books) {
-  const container = document.getElementById('booksContainer');
-  container.innerHTML = '';
-  books.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'pdf-card';
-    card.dataset.pdfId = p.id;
-    card.innerHTML = `
-      <h3>${escapeHtml(p.title)}</h3>
-      <p>Author: ${escapeHtml(p.author || 'Unknown')} ${p.edition ? '| Edition: ' + escapeHtml(p.edition) : ''}</p>
-      <p>Last read: Not loaded</p>
-      <div class="pdf-actions">
-        <a class="pdf-download" href="/download/${p.id}">
-        Download
-        </a>
-      </div>
-    `;
-    container.appendChild(card);
+    renderBooks(currentBooks, searchInput.value.trim().toLowerCase());
+    setActiveSubject(subjectId);
+  }
+
+  function setActiveSubject(subjectId) {
+    subjectCards.forEach(card => {
+      const cardId = card.dataset.subjectId;
+      if (subjectId && cardId === String(subjectId)) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+  }
+
+  function renderBooks(books, searchTerm = '') {
+    let filtered = books;
+
+    if (searchTerm) {
+      filtered = books.filter(book => {
+        const title = (book.title || '').toLowerCase();
+        const author = (book.author || '').toLowerCase();
+        return title.includes(searchTerm) || author.includes(searchTerm);
+      });
+    }
+
+    activeSubjectLabel.textContent = currentSubjectName;
+    resultCount.textContent = `${filtered.length} book${filtered.length === 1 ? '' : 's'}`;
+
+    if (!filtered.length) {
+      booksContainer.innerHTML = `
+        <div class="empty-state">
+          <h3>No books found</h3>
+          <p>Try another subject or a different title/author search.</p>
+        </div>
+      `;
+      return;
+    }
+
+    booksContainer.innerHTML = '';
+
+    filtered.forEach(book => {
+      const card = document.createElement('div');
+      card.className = 'pdf-card';
+
+      card.innerHTML = `
+        <h3>${escapeHtml(book.title || 'Untitled')}</h3>
+
+        <div class="pdf-meta">
+          <div><strong>Author:</strong> ${escapeHtml(book.author || 'Unknown')}</div>
+          ${book.edition ? `<div><strong>Edition:</strong> ${escapeHtml(book.edition)}</div>` : ''}
+          ${book.year ? `<div><strong>Year:</strong> ${escapeHtml(book.year)}</div>` : ''}
+          <div><strong>Last read:</strong> Not loaded</div>
+        </div>
+
+        <div class="pdf-desc">
+          ${escapeHtml(book.description || 'No description available.')}
+        </div>
+
+        <div class="pdf-actions">
+          <a class="pdf-download" href="/download/${book.id}">
+            Download
+          </a>
+        </div>
+      `;
+
+      booksContainer.appendChild(card);
+    });
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, function(c) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;'
+      }[c];
+    });
+  }
+
+  subjectCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const subjectId = card.dataset.subjectId;
+      const subjectName = card.dataset.subjectName;
+      fetchBooks(subjectId, subjectName);
+    });
   });
-}
 
-function escapeHtml(text) {
-  return text ? text.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) : '';
-}
+  showAllBtn.addEventListener('click', () => {
+    currentBooks = [...allBooks];
+    currentSubjectId = null;
+    currentSubjectName = 'All Books';
+    searchInput.value = '';
+    renderBooks(currentBooks, '');
+    setActiveSubject(null);
+  });
 
+  searchInput.addEventListener('input', () => {
+    renderBooks(currentBooks, searchInput.value.trim().toLowerCase());
+  });
 
-
-  // optimistic set last page = 1 (UI)
-  // you should call last-read update when user leaves reader or when PDF viewer sends page events
-  fetch('/api/last-read', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ pdf_id: pdfId, last_page: 1 })
-  }).catch(err => console.warn('Could not save last-read', err));
-
-
-// simple function to load user's highlights for a selected PDF (optional)
-async function loadHighlights(pdfId) {
-  const res = await fetch('/api/highlights?pdf_id=' + pdfId, { credentials: 'same-origin' });
-  const h = await res.json();
-  return h;
-}
+  renderBooks(currentBooks, '');
 </script>
-
 {% endblock %}

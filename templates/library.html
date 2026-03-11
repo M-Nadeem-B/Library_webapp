@@ -15,7 +15,7 @@
 <div style="text-align: right; margin-top: 10px;">
 
 </div>
-<h2 class="welcome-heading">Welcome, {{ name }}!</h2>
+<h2 class="welcome-heading">Welcome, {{ username }}!</h2>
 
 
 <div class="pdf-grid">
@@ -24,11 +24,8 @@
         <h3>📄 {{ pdf.title }}</h3>
         <p>{{ pdf.description }}</p>
         <div class="pdf-actions">
-            <a href="{{ url_for('serve_pdf', filename=pdf.filename) }}" class="pdf-link" target="_self" >
-                📖 View PDF
-            </a>
-            <a href="{{ url_for('download_pdf', filename=pdf.filename) }}" class="pdf-download">
-                💾 Download
+            <a class="pdf-download" href="{{ url_for('download_pdf', filename=p.filename) }}">
+             Download
             </a>
         </div>
     </div>

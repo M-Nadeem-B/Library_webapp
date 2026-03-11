@@ -117,12 +117,23 @@ def register_routes(app):
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        cursor.execute("SELECT id, name FROM subjects ORDER BY name")
+        cursor.execute("""
+            SELECT
+                s.id,
+                s.name,
+                COUNT(p.id) AS book_count
+            FROM subjects s
+            LEFT JOIN pdfs p
+                ON p.subject_id = s.id
+            AND p.is_active = TRUE
+            GROUP BY s.id, s.name
+            ORDER BY s.name
+        """)
         subjects = cursor.fetchall() or []
 
         cursor.execute('''
             SELECT p.id, p.title, p.description, p.filename, p.author, p.edition,
-                   p.year, p.cover_url, p.storage_url, p.subject_id
+                p.year, p.cover_url, p.storage_url, p.subject_id
             FROM pdfs p
             WHERE p.is_active = TRUE
             ORDER BY p.title
@@ -138,7 +149,6 @@ def register_routes(app):
         conn.close()
 
         return render_template('user_dashboard.html', subjects=subjects, pdfs=pdfs, progress_map=progress_map)
-
     @app.route('/api/subjects')
     @login_required
     def api_subjects():
