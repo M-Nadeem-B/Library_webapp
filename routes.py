@@ -164,30 +164,55 @@ def register_routes(app):
     @login_required
     def api_books():
         subject_id = request.args.get('subject_id')
+        query = (request.args.get('q') or '').strip()
+
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        if subject_id:
-            cursor.execute('''
-                SELECT p.id, p.title, p.description, p.filename, p.author, p.edition,
-                       p.year, p.cover_url, p.storage_url, p.subject_id
-                FROM pdfs p
-                WHERE p.subject_id = %s AND p.is_active = TRUE
-                ORDER BY p.title
-            ''', (subject_id,))
-        else:
-            cursor.execute('''
-                SELECT p.id, p.title, p.description, p.filename, p.author, p.edition,
-                       p.year, p.cover_url, p.storage_url, p.subject_id
+        try:
+            sql = """
+                SELECT
+                    p.id,
+                    p.title,
+                    p.description,
+                    p.filename,
+                    p.author,
+                    p.edition,
+                    p.year,
+                    p.cover_url,
+                    p.storage_url,
+                    p.subject_id
                 FROM pdfs p
                 WHERE p.is_active = TRUE
-                ORDER BY p.title
-            ''')
+            """
+            params = []
 
-        rows = cursor.fetchall() or []
-        cursor.close()
-        conn.close()
-        return jsonify(rows)
+            if subject_id:
+                sql += " AND p.subject_id = %s"
+                params.append(subject_id)
+
+            if query:
+                sql += """
+                    AND (
+                        p.title ILIKE %s
+                        OR COALESCE(p.author, '') ILIKE %s
+                    )
+                """
+                like_query = f"%{query}%"
+                params.extend([like_query, like_query])
+
+            sql += " ORDER BY p.title"
+
+            cursor.execute(sql, params)
+            rows = cursor.fetchall() or []
+            return jsonify(rows)
+
+        except Exception as e:
+            print(f"Error in api_books: {e}")
+            return jsonify([])
+        finally:
+            cursor.close()
+            conn.close()
 
     @app.route('/api/last-read', methods=['POST'])
     @login_required

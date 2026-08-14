@@ -229,7 +229,7 @@
   </div>
 
   <h3 class="section-title">Subjects</h3>
-  <p class="helper-text">Click a subject to filter books. Use search to find by title or author.</p>
+  <p class="helper-text">Click a subject to filter books. Search works across title and author.</p>
 
   <div id="subjectGrid" class="subject-grid">
     {% for s in subjects %}
@@ -283,54 +283,33 @@
   const searchInput = document.getElementById('searchInput');
   const showAllBtn = document.getElementById('showAllBtn');
 
-  let allBooks = {{ pdfs|tojson }};
-  let currentBooks = [...allBooks];
-  let currentSubjectName = 'All Books';
   let currentSubjectId = null;
+  let currentSubjectName = 'All Books';
 
-  async function fetchBooks(subjectId = null, subjectName = 'All Books') {
-    let url = '/api/books';
-    if (subjectId) {
-      url += '?subject_id=' + encodeURIComponent(subjectId);
+  async function fetchBooks() {
+    const params = new URLSearchParams();
+
+    if (currentSubjectId) {
+      params.append('subject_id', currentSubjectId);
     }
 
+    const searchValue = searchInput.value.trim();
+    if (searchValue) {
+      params.append('q', searchValue);
+    }
+
+    const url = '/api/books' + (params.toString() ? `?${params.toString()}` : '');
     const resp = await fetch(url, { credentials: 'same-origin' });
     const books = await resp.json();
 
-    currentBooks = books;
-    currentSubjectId = subjectId;
-    currentSubjectName = subjectName;
-
-    renderBooks(currentBooks, searchInput.value.trim().toLowerCase());
-    setActiveSubject(subjectId);
+    renderBooks(books);
   }
 
-  function setActiveSubject(subjectId) {
-    subjectCards.forEach(card => {
-      const cardId = card.dataset.subjectId;
-      if (subjectId && cardId === String(subjectId)) {
-        card.classList.add('active');
-      } else {
-        card.classList.remove('active');
-      }
-    });
-  }
-
-  function renderBooks(books, searchTerm = '') {
-    let filtered = books;
-
-    if (searchTerm) {
-      filtered = books.filter(book => {
-        const title = (book.title || '').toLowerCase();
-        const author = (book.author || '').toLowerCase();
-        return title.includes(searchTerm) || author.includes(searchTerm);
-      });
-    }
-
+  function renderBooks(books) {
     activeSubjectLabel.textContent = currentSubjectName;
-    resultCount.textContent = `${filtered.length} book${filtered.length === 1 ? '' : 's'}`;
+    resultCount.textContent = `${books.length} book${books.length === 1 ? '' : 's'}`;
 
-    if (!filtered.length) {
+    if (!books.length) {
       booksContainer.innerHTML = `
         <div class="empty-state">
           <h3>No books found</h3>
@@ -342,7 +321,7 @@
 
     booksContainer.innerHTML = '';
 
-    filtered.forEach(book => {
+    books.forEach(book => {
       const card = document.createElement('div');
       card.className = 'pdf-card';
 
@@ -382,27 +361,40 @@
     });
   }
 
+  function setActiveSubject(subjectId) {
+    subjectCards.forEach(card => {
+      const cardId = card.dataset.subjectId;
+      if (subjectId && cardId === String(subjectId)) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+  }
+
   subjectCards.forEach(card => {
     card.addEventListener('click', () => {
-      const subjectId = card.dataset.subjectId;
-      const subjectName = card.dataset.subjectName;
-      fetchBooks(subjectId, subjectName);
+      currentSubjectId = card.dataset.subjectId;
+      currentSubjectName = card.dataset.subjectName;
+      setActiveSubject(currentSubjectId);
+      fetchBooks();
     });
   });
 
   showAllBtn.addEventListener('click', () => {
-    currentBooks = [...allBooks];
     currentSubjectId = null;
     currentSubjectName = 'All Books';
     searchInput.value = '';
-    renderBooks(currentBooks, '');
     setActiveSubject(null);
+    fetchBooks();
   });
 
+  let searchTimeout;
   searchInput.addEventListener('input', () => {
-    renderBooks(currentBooks, searchInput.value.trim().toLowerCase());
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      fetchBooks();
+    }, 300);
   });
-
-  renderBooks(currentBooks, '');
 </script>
 {% endblock %}
