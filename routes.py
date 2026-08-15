@@ -31,6 +31,8 @@ def register_routes(app):
         if request.method == 'POST':
             username = request.form.get('username')
             enrollment_no = request.form.get('enrollment_no')
+            forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR', '')
+            client_ip = forwarded_for.split(',')[0].strip() if forwarded_for else (request.remote_addr or '')
 
             print(f"Login attempt - form username={username!r}, enrollment_no={enrollment_no!r}")
 
@@ -48,13 +50,16 @@ def register_routes(app):
                     except Exception:
                         is_valid = False
 
-            log_login_attempt(
-                user['username'] if user and 'username' in user else username,
-                enrollment_no,
-                is_valid,
-                request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr),
-                request.headers.get('User-Agent')
-            )
+            try:
+                log_login_attempt(
+                    user['username'] if user and 'username' in user else username,
+                    enrollment_no,
+                    is_valid,
+                    client_ip,
+                    request.headers.get('User-Agent')
+                )
+            except Exception as exc:
+                print(f"Login logging failed: {exc}")
 
             if is_valid:
                 session['user_id'] = user['id']

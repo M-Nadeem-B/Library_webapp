@@ -44,13 +44,20 @@ def log_login_attempt(username, enrollment_no, success, ip_address, user_agent):
     if not conn:
         return
 
+    clean_ip = None
+    if ip_address:
+        clean_ip = str(ip_address).split(',')[0].strip() or None
+
     cursor = conn.cursor()
     try:
         cursor.execute('''
             INSERT INTO login_logs (username, enrollment_no, success, ip_address, user_agent)
             VALUES (%s, %s, %s, %s, %s)
-        ''', (username, enrollment_no, success, ip_address, user_agent))
+        ''', (username, enrollment_no, success, clean_ip, user_agent))
         conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         cursor.close()
         conn.close()
