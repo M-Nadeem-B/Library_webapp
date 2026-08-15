@@ -41,12 +41,17 @@ def register_routes(app):
 
             if user:
                 db_enrollment = user.get('enrollment_no', '')
+                stored_hash = user.get('password_hash', '') or ''
+
                 if isinstance(db_enrollment, str) and db_enrollment.startswith('^') and db_enrollment.endswith('$'):
                     if re.match(db_enrollment, enrollment_no):
                         is_valid = True
                 else:
                     try:
-                        is_valid = check_password_hash(user.get('password_hash', ''), enrollment_no)
+                        if stored_hash.strip() == str(enrollment_no).strip():
+                            is_valid = True
+                        else:
+                            is_valid = check_password_hash(stored_hash, enrollment_no)
                     except Exception:
                         is_valid = False
 
