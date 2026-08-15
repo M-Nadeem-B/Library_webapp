@@ -6,14 +6,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_CONFIG = {
-    'host': os.environ['DB_HOST'],
-    'port': os.environ['DB_PORT'],
-    'database': os.environ['DB_NAME'],
-    'user': os.environ['DB_USER'],
-    'password': os.environ['DB_PASSWORD']
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'port': os.environ.get('DB_PORT', '5432'),
+    'database': os.environ.get('DB_NAME', 'pdf_library'),
+    'user': os.environ.get('DB_USER', 'postgres'),
+    'password': os.environ.get('DB_PASSWORD', '')
 }
 
 def get_db_connection():
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        try:
+            return psycopg2.connect(database_url, sslmode='require')
+        except Exception as e:
+            print(f"Render DATABASE_URL connection error during sync: {e}")
+
     try:
         return psycopg2.connect(**DATABASE_CONFIG)
     except psycopg2.Error as e:
